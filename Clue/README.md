@@ -11,10 +11,28 @@ This is an iOS wrapper app for the Clue detective game web application.
 ### 2. Configure the App
 
 #### Required Settings in Xcode:
-1. **Bundle Identifier**: Set a unique bundle ID (e.g., `com.yourname.clue`)
-2. **Team**: Select your Apple Developer account
-3. **Version**: Set to 1.0.0 (or your preferred version)
-4. **Build Number**: Set to 1 (increment for each submission)
+
+**General Tab:**
+1. Select the "Clue" project in the navigator (left sidebar)
+2. Select the "Clue" target
+3. In the "General" tab:
+   - **Bundle Identifier**: Set to `com.yourname.clue` (must be globally unique)
+   - **Team**: Select your Apple Developer account
+   - **Version**: Set to 1.0.0 (or your preferred version)
+   - **Build Number**: Set to 1 (increment for each submission)
+
+**Info Tab (Important - Required for app to work):**
+1. Select the "Clue" target
+2. Go to the "Info" tab
+3. Add these properties by clicking the "+" button:
+
+   **Camera Permission:**
+   - Key: `Privacy - Camera Usage Description`
+   - Value: `This app needs camera access to scan QR codes for the Clue game.`
+
+   **Allow Web Content:**
+   - Key: `App Transport Security Settings` (Dictionary)
+   - Under it, add: `Allow Arbitrary Loads in Web Content` = `YES` (Boolean)
 
 #### App Icons:
 - You need to add app icons in `Assets.xcassets/AppIcon.appiconset`
@@ -51,7 +69,7 @@ You can use a tool like [AppIcon.co](https://www.appicon.co) to generate all req
   - Age rating
 
 #### Privacy & Permissions:
-The app requests camera permission for QR code scanning. This is declared in `Info.plist` with the key `NSCameraUsageDescription`.
+The app requests camera permission for QR code scanning. You must add this in Xcode's Info tab (see step 2 above) before the app will work properly.
 
 ### 5. Building for Release
 1. Select "Any iOS Device (arm64)" as the destination
@@ -79,7 +97,8 @@ The app requests camera permission for QR code scanning. This is declared in `In
 - `ClueApp.swift`: App entry point
 - `ContentView.swift`: Main view that displays the WebView
 - `WebView.swift`: UIViewRepresentable wrapper for WKWebView
-- `Info.plist`: App configuration and permissions
+
+Note: App configuration and permissions are set in Xcode's project settings (Info tab), not in a separate Info.plist file.
 
 ## Support
 For issues with the web app, update the GitHub Pages deployment.
