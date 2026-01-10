@@ -3,18 +3,18 @@ import { Camera, Check, X, AlertCircle, Home, QrCode, Settings, TrendingUp, Plus
 
 // Import QR code libraries
 const loadExternalScripts = () => {
-  return new Promise((resolve) => {
+  return new Promise<void>((resolve) => {
     // Check if scripts already loaded
     if (window.jsQR && window.QRCode) {
       resolve();
       return;
     }
-    
+
     const scripts = [
       'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js',
       'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'
     ];
-    
+
     let loaded = 0;
     scripts.forEach(src => {
       const script = document.createElement('script');
