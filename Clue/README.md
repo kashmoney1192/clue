@@ -21,16 +21,19 @@ This is an iOS wrapper app for the Clue detective game web application.
    - **Version**: Set to 1.0.0 (or your preferred version)
    - **Build Number**: Set to 1 (increment for each submission)
 
-**Info Tab (Important - Required for app to work):**
+**Info Tab (Optional - Add later if needed):**
+
+The app will work without these settings, but you can add them later:
+
 1. Select the "Clue" target
 2. Go to the "Info" tab
 3. Add these properties by clicking the "+" button:
 
-   **Camera Permission:**
+   **Camera Permission (Optional - only needed for QR scanning):**
    - Key: `Privacy - Camera Usage Description`
    - Value: `This app needs camera access to scan QR codes for the Clue game.`
 
-   **Allow Web Content:**
+   **Allow Web Content (Optional - may improve compatibility):**
    - Key: `App Transport Security Settings` (Dictionary)
    - Under it, add: `Allow Arbitrary Loads in Web Content` = `YES` (Boolean)
 
@@ -69,7 +72,7 @@ You can use a tool like [AppIcon.co](https://www.appicon.co) to generate all req
   - Age rating
 
 #### Privacy & Permissions:
-The app requests camera permission for QR code scanning. You must add this in Xcode's Info tab (see step 2 above) before the app will work properly.
+The app can optionally use camera permission for QR code scanning. This can be added later in Xcode's Info tab if needed.
 
 ### 5. Building for Release
 1. Select "Any iOS Device (arm64)" as the destination
