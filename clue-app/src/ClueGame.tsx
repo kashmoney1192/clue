@@ -1,39 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Camera, Check, X, AlertCircle, Home, QrCode, Settings, TrendingUp, Plus, Trash2, Edit2, Printer, Download } from 'lucide-react';
-
-// Import QR code libraries
-const loadExternalScripts = () => {
-  return new Promise<void>((resolve) => {
-    // Check if scripts already loaded
-    if (window.jsQR && window.QRCode) {
-      resolve();
-      return;
-    }
-
-    const scripts = [
-      'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js',
-      'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'
-    ];
-
-    let loaded = 0;
-    scripts.forEach(src => {
-      const script = document.createElement('script');
-      script.src = src;
-      script.onload = () => {
-        loaded++;
-        if (loaded === scripts.length) {
-          setTimeout(() => resolve(), 100);
-        }
-      };
-      script.onerror = () => {
-        console.error('Failed to load script:', src);
-        loaded++;
-        if (loaded === scripts.length) resolve();
-      };
-      document.head.appendChild(script);
-    });
-  });
-};
+import jsQR from 'jsqr';
+import { QRCodeSVG } from 'qrcode.react';
 
 // Default game pieces
 const DEFAULT_GAME_PIECES = {
@@ -78,10 +46,8 @@ const ClueGame = () => {
   const [message, setMessage] = useState(null);
   const [gamePieces, setGamePieces] = useState(DEFAULT_GAME_PIECES);
   const [playerStats, setPlayerStats] = useState(null);
-  const [scriptsLoaded, setScriptsLoaded] = useState(false);
 
   useEffect(() => {
-    loadExternalScripts().then(() => setScriptsLoaded(true));
     loadGameState();
     loadGamePieces();
     loadPlayerStats();
@@ -473,7 +439,6 @@ const ClueGame = () => {
       <QRGeneratorScreen
         gamePieces={gamePieces}
         onBack={() => setScreen('welcome')}
-        scriptsLoaded={scriptsLoaded}
       />
     );
   }
@@ -597,10 +562,9 @@ const ClueGame = () => {
         </div>
 
         {showScanner && (
-          <QRScanner 
+          <QRScanner
             onScan={scanQRCode}
             onClose={() => setShowScanner(false)}
-            scriptsLoaded={scriptsLoaded}
           />
         )}
 
@@ -620,7 +584,7 @@ const ClueGame = () => {
   return null;
 };
 
-const QRScanner = ({ onScan, onClose, scriptsLoaded }) => {
+const QRScanner = ({ onScan, onClose }) => {
   const [manualInput, setManualInput] = useState('');
   const [scanning, setScanning] = useState(false);
   const videoRef = useRef(null);
@@ -634,16 +598,11 @@ const QRScanner = ({ onScan, onClose, scriptsLoaded }) => {
   }, []);
 
   const startScanning = async () => {
-    if (!scriptsLoaded || !window.jsQR) {
-      alert('QR scanning library not loaded yet. Please use manual input.');
-      return;
-    }
-
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
       });
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
@@ -681,7 +640,7 @@ const QRScanner = ({ onScan, onClose, scriptsLoaded }) => {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = window.jsQR(imageData.data, imageData.width, imageData.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
       
       if (code) {
         stopScanning();
@@ -1041,90 +1000,8 @@ const AdminScreen = ({ gamePieces, onSave, onBack }) => {
   );
 };
 
-const QRGeneratorScreen = ({ gamePieces, onBack, scriptsLoaded }) => {
+const QRGeneratorScreen = ({ gamePieces, onBack }) => {
   const [selectedType, setSelectedType] = useState('suspects');
-  const [qrGenerated, setQrGenerated] = useState(false);
-  const qrRefs = useRef({});
-
-  useEffect(() => {
-    if (scriptsLoaded && window.QRCode) {
-      // Small delay to ensure DOM is ready
-      setQrGenerated(false);
-      setTimeout(() => {
-        generateQRCodes();
-        setQrGenerated(true);
-      }, 100);
-    }
-  }, [selectedType, scriptsLoaded]);
-
-  const generateQRCodes = () => {
-    const pieces = gamePieces[selectedType].filter(p => p.active);
-    
-    pieces.forEach(piece => {
-      const elementId = `qr-${piece.id}`;
-      const element = document.getElementById(elementId);
-      
-      if (element && window.QRCode) {
-        element.innerHTML = '';
-        try {
-          new window.QRCode(element, {
-            text: `CLUE:${selectedType.toUpperCase()}:${piece.id.toUpperCase()}`,
-            width: 200,
-            height: 200
-          });
-        } catch (error) {
-          console.error('QR generation error:', error);
-          element.innerHTML = '<div class="text-red-500 text-sm">Error generating QR</div>';
-        }
-      }
-    });
-  };
-
-  const downloadAllQRCodes = async () => {
-    const pieces = gamePieces[selectedType].filter(p => p.active);
-    
-    for (let i = 0; i < pieces.length; i++) {
-      const piece = pieces[i];
-      const elementId = `qr-${piece.id}`;
-      const element = document.getElementById(elementId);
-      const canvas = element.querySelector('canvas');
-      
-      if (canvas) {
-        const link = document.createElement('a');
-        link.download = `${piece.name.replace(/\s+/g, '_')}_QR.png`;
-        link.href = canvas.toDataURL();
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Wait 500ms between downloads to avoid browser blocking
-        if (i < pieces.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      }
-    }
-    
-    alert(`Downloaded ${pieces.length} QR codes!`);
-  };
-
-  if (!scriptsLoaded || !window.QRCode) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center p-6">
-          <div className="text-2xl font-bold mb-2">Loading QR Generator...</div>
-          <div className="text-gray-600 mb-4">Please wait a moment</div>
-          {!window.QRCode && scriptsLoaded && (
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700"
-            >
-              Reload Page
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
 
   const activePieces = gamePieces[selectedType].filter(p => p.active);
 
@@ -1155,18 +1032,12 @@ const QRGeneratorScreen = ({ gamePieces, onBack, scriptsLoaded }) => {
       </div>
 
       <div className="p-4">
-        <div className="mb-4 flex gap-2">
+        <div className="mb-4">
           <button
             onClick={() => window.print()}
-            className="flex-1 bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 flex items-center justify-center"
+            className="w-full bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 flex items-center justify-center"
           >
             <Printer size={20} className="mr-2" /> Print Page
-          </button>
-          <button
-            onClick={downloadAllQRCodes}
-            className="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 flex items-center justify-center"
-          >
-            <Download size={20} className="mr-2" /> Download All
           </button>
         </div>
 
@@ -1175,7 +1046,13 @@ const QRGeneratorScreen = ({ gamePieces, onBack, scriptsLoaded }) => {
             <div key={piece.id} className="bg-white rounded-lg p-4 shadow text-center">
               <div className="text-3xl mb-2">{piece.emoji}</div>
               <div className="font-bold mb-3">{piece.name}</div>
-              <div id={`qr-${piece.id}`} className="flex justify-center mb-2"></div>
+              <div className="flex justify-center mb-2">
+                <QRCodeSVG
+                  value={`CLUE:${selectedType.toUpperCase()}:${piece.id.toUpperCase()}`}
+                  size={150}
+                  level="M"
+                />
+              </div>
               <div className="text-xs text-gray-500 break-all">
                 CLUE:{selectedType.toUpperCase()}:{piece.id.toUpperCase()}
               </div>
